@@ -1,4 +1,4 @@
-import { AggregateCommandType, AggregateNames, FileExistsMethod, Logger, ReadFileMethod, UploadStatus } from './types/internal';
+import { FileExistsMethod, Logger, ReadFileMethod } from './types/internal';
 import { UploadInfo } from './types/internal/resolve';
 import { createGetUploadInfoError, createFileUploadError, createTestUploadError, createWarningUploadError } from './texts';
 import Transport from './transport';
@@ -34,7 +34,7 @@ export class Uploader {
     }
 
     private async _upload (uploadInfo: UploadInfo, uploadEntity: Buffer, uploadError: string): Promise<void> {
-        const { uploadUrl, uploadId } = uploadInfo;
+        const { uploadUrl } = uploadInfo;
 
         const response = await this._transport.fetch(uploadUrl, {
             method:  'PUT',
@@ -44,15 +44,15 @@ export class Uploader {
             body: uploadEntity
         });
 
-        await this._transport.sendResolveCommand({
-            aggregateId:   uploadId,
-            aggregateName: AggregateNames.Upload,
-            type:          AggregateCommandType.createUpload,
+        // await this._transport.sendResolveCommand({
+        //     aggregateId:   uploadId,
+        //     aggregateName: AggregateNames.Upload,
+        //     type:          AggregateCommandType.createUpload,
 
-            payload: {
-                status: response.ok ? UploadStatus.Completed : UploadStatus.Failed
-            }
-        });
+        //     payload: {
+        //         status: response.ok ? UploadStatus.Completed : UploadStatus.Failed
+        //     }
+        // });
 
         if (!response.ok)
             this._logger.error(`${uploadError}. Response: ${response}`);
@@ -70,7 +70,7 @@ export class Uploader {
         return uploadInfo.uploadId;
     }
 
-    requestUploadEntity ( uploadInfo: UploadInfo, uploadObject: object, error: string): void {
+    requestUploadEntity (uploadInfo: UploadInfo, uploadObject: object, error: string): void {
         const buffer = Buffer.from(JSON.stringify(uploadObject, (key, value) => value instanceof RegExp ? value.toString() : value));
 
         this._uploads.push(this._upload(uploadInfo, buffer, error));
@@ -90,6 +90,33 @@ export class Uploader {
         if (!uploadInfo) return void 0;
         this.requestUploadEntity(uploadInfo, warningInfo, createWarningUploadError(uploadInfo.uploadId, uploadEntityId));
         return uploadInfo.uploadId;
+    }
+
+    async uploadReportState (reportId: string, reportState: object): Promise<UploadInfo> {
+        const uploadInfo = await this._getUploadInfo(reportId);
+
+        if (!uploadInfo) throw new Error('Unable to get upload info');
+
+        const buffer = Buffer.from(JSON.stringify(reportState, (key, value) => value instanceof RegExp ? value.toString() : value));
+
+        await this._upload(uploadInfo, buffer, `Unable to upload report state. Report ID: ${reportId}`);
+
+        return uploadInfo;
+    }
+
+    async updateReportState (uploadUrl: string, reportId: string, reportState: object) {
+        const buffer = Buffer.from(JSON.stringify(reportState, (key, value) => value instanceof RegExp ? value.toString() : value));
+
+        const response = await this._transport.fetch(uploadUrl, {
+            method:  'PUT',
+            headers: {
+                'Content-Length': buffer.length
+            },
+            body: buffer
+        });
+
+        if (!response.ok)
+            this._logger.error(`Unable to update report state. Report ID: ${reportId}. Response: ${response}`);
     }
 
     async waitUploads (): Promise<void> {

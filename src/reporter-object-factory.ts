@@ -29,7 +29,7 @@ import {
 } from './types';
 import { Uploader } from './upload';
 import { errorDecorator, curly } from './error-decorator';
-import reportCommandsFactory from './report-commands-factory';
+import reportCommandsFactory from './s3-commands-factory';
 import Transport from './transport';
 import assignReporterMethods from './assign-reporter-methods';
 import { validateSettings } from './validate-settings';
@@ -67,7 +67,7 @@ export function reporterObjectFactory (
 
     const transport      = new Transport(fetch, dashboardUrl, authenticationToken, isLogEnabled, logger, responseTimeout, requestRetryCount);
     const uploader       = new Uploader(readFile, fileExists, transport, logger);
-    const reportCommands = reportCommandsFactory(id, transport);
+    const reportCommands = reportCommandsFactory(id, transport, uploader);
 
     const testRunToWarningsMap: Record<string, Warning[]>         = {};
     const runWarnings: Warning[] = [];
