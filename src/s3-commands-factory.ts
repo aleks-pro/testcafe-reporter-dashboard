@@ -99,7 +99,7 @@ export default function reportCommandsFactory (reportId: string, transport: Tran
                 _report.started++;
             }
 
-            await uploader.updateReportState(_uploadUrl, reportId, _report);
+            //await uploader.updateReportState(_uploadUrl, reportId, _report);
         },
         async sendTestDoneCommand (payload: TestDoneArgs): Promise<void> {
             //return sendReportCommand(AggregateCommandType.reportTestDone, payload);
