@@ -291,9 +291,9 @@ export function reporterObjectFactory (
                         screenshotMapItem.ids = {
                             ...screenshotMapItem.ids,
 
-                            baseline: await uploader.uploadLayoutTestingArtifact(comparisonArtifactsPath, '_etalon'),
-                            diff:     await uploader.uploadLayoutTestingArtifact(comparisonArtifactsPath, '_diff'),
-                            mask:     await uploader.uploadLayoutTestingArtifact(comparisonArtifactsPath, '_mask')
+                            baseline: await uploader.uploadLayoutTestingArtifact(comparisonArtifactsPath || '', '_etalon'),
+                            diff:     await uploader.uploadLayoutTestingArtifact(comparisonArtifactsPath || '', '_diff'),
+                            mask:     await uploader.uploadLayoutTestingArtifact(comparisonArtifactsPath || '', '_mask')
                         };
                     }
 
